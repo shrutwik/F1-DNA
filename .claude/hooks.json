@@ -1,0 +1,17 @@
+{
+  "version": "1",
+  "hooks": {
+    "before-read": [
+      {
+        "condition": "file-size > 50KB",
+        "suggestion": "Use ctx_execute_file instead for large files — keeps output in sandbox"
+      }
+    ],
+    "before-bash": [
+      {
+        "condition": "output > 20 lines",
+        "suggestion": "Use ctx_execute or ctx_batch_execute instead — pipe output to sandbox"
+      }
+    ]
+  }
+}
