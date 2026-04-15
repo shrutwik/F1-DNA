@@ -59,4 +59,4 @@ After /clear or /compact: knowledge base and session stats are preserved. Inform
 - **Order**: implement → spec compliance review → code quality review (never swap).
 - **Models**: use the least capable model that fits the task; reserve stronger models for integration, ambiguity, or final review.
 - **Parallelism**: do not run two implementer subagents on the same working tree.
-- **Prompts**: root `*-prompt.md` files; keep replies to status + evidence (paths, SHAs), not essays.
+- **Prompts**: `docs/*-prompt.md`; keep replies to status + evidence (paths, SHAs), not essays.
