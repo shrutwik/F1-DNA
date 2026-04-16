@@ -2,3 +2,6 @@ fastf1>=3.3.0,<4
 pandas>=2.0.0
 numpy>=1.26.0
 httpx>=0.27.0
+fastapi>=0.115.0
+uvicorn>=0.30.0
+pytest>=8.0.0
