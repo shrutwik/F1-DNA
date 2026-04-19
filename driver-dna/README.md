@@ -11,6 +11,36 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
+Optional performance knobs for faster interactive previews (default values shown):
+
+```bash
+export DRIVER_DNA_MAX_ROUNDS=8
+export DRIVER_DNA_MAX_TELEMETRY_LAPS=6
+```
+
+Lower values make first `/api/driver/{code}` responses faster by sampling fewer rounds/laps.
+
+Backend runs at `http://127.0.0.1:8000`.
+
+## Frontend setup
+
+From `driver-dna/frontend`:
+
+```bash
+npm install
+npm run dev
+```
+
+Frontend runs at `http://127.0.0.1:5173` (Vite default).
+
+For production verification:
+
+```bash
+npm run typecheck
+npm run test
+npm run build
+```
+
 ## API endpoints
 
 - `GET /health`

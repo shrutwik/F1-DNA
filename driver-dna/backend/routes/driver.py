@@ -22,7 +22,20 @@ def get_driver(
     code: str,
     year: int = Query(..., description="Season year"),
     force_refresh: bool = Query(False, description="Bypass memory cache"),
+    max_rounds: int | None = Query(None, ge=1, le=24, description="Optional cap for analyzed rounds"),
+    max_telemetry_laps: int | None = Query(
+        None,
+        ge=1,
+        le=20,
+        description="Optional cap for telemetry laps per analyzed round",
+    ),
 ) -> DriverMetricsResponse:
-    payload, cached = get_driver_metrics(code=code, year=year, force_refresh=force_refresh)
+    payload, cached = get_driver_metrics(
+        code=code,
+        year=year,
+        force_refresh=force_refresh,
+        max_rounds=max_rounds,
+        max_telemetry_laps=max_telemetry_laps,
+    )
     payload = {**payload, "cached": cached}
     return DriverMetricsResponse(**payload)

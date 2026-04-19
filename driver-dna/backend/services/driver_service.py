@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 import fastf1
@@ -14,6 +15,18 @@ from services.cache import cache
 
 DRIVERS_TTL_SECONDS = 12 * 60 * 60
 METRICS_TTL_SECONDS = 6 * 60 * 60
+
+
+def _env_int(name: str, default: int, minimum: int) -> int:
+    try:
+        return max(minimum, int(os.getenv(name, str(default))))
+    except (TypeError, ValueError):
+        return default
+
+
+# Fast-path defaults for interactive UI. Can be overridden by env.
+DEFAULT_MAX_ROUNDS = _env_int("DRIVER_DNA_MAX_ROUNDS", 8, 1)
+DEFAULT_MAX_TELEMETRY_LAPS = _env_int("DRIVER_DNA_MAX_TELEMETRY_LAPS", 6, 1)
 
 
 def _validate_year(year: int) -> None:
@@ -76,31 +89,54 @@ def list_drivers(year: int, force_refresh: bool = False) -> tuple[list[DriverIte
     return payload, False
 
 
-def _compute_driver_metrics(code: str, year: int) -> dict[str, Any]:
-    season = load_driver_season(code, year)
+def _compute_driver_metrics(
+    code: str,
+    year: int,
+    max_rounds: int = DEFAULT_MAX_ROUNDS,
+    max_telemetry_laps: int = DEFAULT_MAX_TELEMETRY_LAPS,
+) -> dict[str, Any]:
+    season = load_driver_season(code, year, max_rounds=max_rounds)
     if not season.rounds:
         raise NotFoundError(
             detail=f"No race data found for driver {code} in {year}",
             code="driver_not_found",
         )
-    metrics = compute_all_metrics(season)
+    metrics = compute_all_metrics(
+        season,
+        max_laps_per_round_telemetry=max_telemetry_laps,
+    )
     return metrics_to_json_dict(metrics)
 
 
-def get_driver_metrics(code: str, year: int, force_refresh: bool = False) -> tuple[dict[str, Any], bool]:
+def get_driver_metrics(
+    code: str,
+    year: int,
+    force_refresh: bool = False,
+    max_rounds: int | None = None,
+    max_telemetry_laps: int | None = None,
+) -> tuple[dict[str, Any], bool]:
     _validate_year(year)
     code = (code or "").strip().upper()
     if len(code) != 3:
         raise BadRequestError(detail="Driver code must be a 3-letter abbreviation", code="invalid_driver_code")
 
-    cache_key = f"metrics:{year}:{code}"
+    rounds_limit = max_rounds if max_rounds is not None else DEFAULT_MAX_ROUNDS
+    telemetry_laps_limit = (
+        max_telemetry_laps if max_telemetry_laps is not None else DEFAULT_MAX_TELEMETRY_LAPS
+    )
+    cache_key = f"metrics:{year}:{code}:r{rounds_limit}:l{telemetry_laps_limit}"
     if not force_refresh:
         hit, payload = cache.get(cache_key)
         if hit:
             return payload, True
 
     try:
-        payload = _compute_driver_metrics(code=code, year=year)
+        payload = _compute_driver_metrics(
+            code=code,
+            year=year,
+            max_rounds=rounds_limit,
+            max_telemetry_laps=telemetry_laps_limit,
+        )
     except (BadRequestError, NotFoundError):
         raise
     except Exception as exc:

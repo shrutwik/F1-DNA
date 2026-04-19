@@ -55,8 +55,9 @@ def pick_clean_laps_df(df: pd.DataFrame) -> pd.DataFrame:
         d = d[d["PitOutTime"].isna()]
     if "IsAccurate" in d.columns:
         d = d[d["IsAccurate"].fillna(True).astype(bool)]
-    lt = d["LapTime"].map(_lap_time_seconds)
-    d = d.assign(_lt=lt)
+    # Convert in vectorized form to avoid timedelta-vs-float comparisons.
+    lt = pd.to_timedelta(d["LapTime"], errors="coerce").dt.total_seconds()
+    d = d.assign(_lt=lt.astype(float))
     d = d[d["_lt"].notna() & (d["_lt"] > 30.0) & (d["_lt"] < 300.0)]
     return d
 
